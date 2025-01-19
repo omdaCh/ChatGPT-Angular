@@ -1,0 +1,19 @@
+.btn-xs {
+    padding: 0.15rem 0.25rem;
+    font-size: 0.55rem;
+}
+
+.text-container {
+    width: 200px; /* Set the container width */
+    white-space: nowrap; /* Prevent text from wrapping */
+    overflow: hidden; /* Hide overflow */
+    // text-overflow: ellipsis; /* Fallback for unsupported browsers */
+    
+    /* Apply the gradient mask */
+    -webkit-mask-image: linear-gradient(to right, black 80%, transparent 100%);
+    mask-image: linear-gradient(to right, black 80%, transparent 100%);
+    
+    /* Ensure proper rendering in WebKit-based browsers */
+    -webkit-mask-composite: destination-in;
+    mask-composite: intersect;
+  }
