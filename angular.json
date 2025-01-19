@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/chatgpt-api",
+            "outputPath": "dist",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -87,6 +87,7 @@
             "tsConfig": "tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
             "assets": [
+              "src/assets",
               {
                 "glob": "**/*",
                 "input": "public"

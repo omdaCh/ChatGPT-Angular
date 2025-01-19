@@ -3,7 +3,7 @@ import { ChatComponent } from './chat-component/chat-component.component';
 import { Conversation } from './conversation.model';
 import { ChatService } from './services/chat.service';
 import { SidenaveComponent } from './sidenave/sidenave.component';
-import { animate, state, style, transition, trigger } from '@angular/animations';
+import { initializeApp } from "firebase/app";
 
 
 @Component({
@@ -20,6 +20,18 @@ export class AppComponent implements OnInit {
   chatService: ChatService = inject(ChatService);
 
   isSideNaveCollapsed: { value: boolean } = { value: false };
+
+  firebaseConfig = {
+    apiKey: "AIzaSyCiWYhF_RMtDulOo3pSeHzOb8iyNxMhqqE",
+    authDomain: "chatgpt-angular-9765d.firebaseapp.com",
+    projectId: "chatgpt-angular-9765d",
+    storageBucket: "chatgpt-angular-9765d.firebasestorage.app",
+    messagingSenderId: "174920482697",
+    appId: "1:174920482697:web:37a729bf927bbdb6cbeb58"
+  };
+
+  // Initialize Firebase
+  app = initializeApp(this.firebaseConfig);
 
   ngOnInit() {
     // this.chatService.newThread().subscribe({
