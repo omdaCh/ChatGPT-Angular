@@ -23,6 +23,7 @@
     "firebase": "^11.2.0",
     "ngx-bootstrap": "^19.0.1",
     "ngx-markdown": "^19.0.0",
+    "prismjs": "^1.28.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"

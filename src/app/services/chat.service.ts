@@ -1,15 +1,21 @@
 import { HttpClient, HttpEvent, HttpEventType } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { ChatThread } from '../types'
 
 @Injectable({
   providedIn: 'root',
 })
 export class ChatService {
+
   private apiUrl = 'http://localhost:3000/stream-chat';
 
-  private serverUrl = 'http://localhost:3000'
+  private serverUrl = 'http://localhost:3000';
+
+  private openedThread: ChatThread | undefined;
+
+  private openedThreadSubject = new BehaviorSubject<any>(null);
+  openedThread$ = this.openedThreadSubject.asObservable(); // Expose as Observable
 
 
   http: HttpClient = inject(HttpClient);
@@ -156,7 +162,6 @@ export class ChatService {
     });
   }
 
-
   streamAssistantResponse2(): Observable<string> {
     return new Observable((observer) => {
       // Create a POST request with the message in the body
@@ -228,13 +233,11 @@ export class ChatService {
     });
   }
 
-  // Method to close the SSE connection
   closeConnection() {
     if (this.eventSource) {
       this.eventSource.close();
     }
   }
-
 
   getThreads(): Observable<ChatThread[]> {
     return this.http.get<ChatThread[]>(`${this.serverUrl}/threads`);
@@ -244,5 +247,34 @@ export class ChatService {
     const apiUrl = `${this.serverUrl}/threads/new-thread`;
     return this.http.get<{ thread_id: string }>(`${this.serverUrl}/threads/new-thread`);
   }
+
+  deleteThread(threadId: string): Observable<any> {
+    return this.http.delete(`${this.serverUrl}/threads/${threadId}`);
+  }
+
+  startNewConversation(message: string): Observable<any> {
+    return this.http.post(`${this.serverUrl}/threads/new-conversation`, { message });
+  }
+
+  createNewThread() {
+    this.openedThread = {
+      thread_id: '',
+      created_at: '',
+      title: '',
+    };
+    this.openedThreadSubject.next(this.openedThread);
+    this.chatThreads.push(this.openedThread);
+  }
+
+  setOpenedThread(thread: ChatThread) {
+    this.openedThread = thread;
+    this.openedThreadSubject.next(this.openedThread);
+  }
+
+  updateThreadTitle(threadId: string, title: string): Observable<any> {
+    return this.http.put(`${this.serverUrl}/threads/update-title`, { thread_id: threadId, title });
+  }
+
+
 }
 

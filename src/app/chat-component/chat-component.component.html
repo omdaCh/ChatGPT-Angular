@@ -1,30 +1,86 @@
-<div class="tw-flex tw-flex-col tw-items-center  tw-grow tw-h-full tw-overflow-auto">
-    <div class="tw-flex tw-flex-col tw-h-full tw-overflow-auto tw-p-2">
-        <markdown [data]="response"></markdown>
-        @if(!response){
+<div class="tw-flex tw-flex-col tw-items-center tw-grow tw-h-full tw-overflow-auto tw-pl-20 tw-pr-20">
+    @if(opndThrMsgsLoding){
+    <div class="tw-w-full tw-h-full tw-flex tw-flex-col tw-gap-1 tw-items-center tw-justify-center">
+        <div class="spinner-border text-secondary" role="status">
+            <!-- <span class="sr-only">Loading...</span> -->
+        </div>
+        <span class="tw-text-sm text-secondary">Loading...</span>
+    </div>
+    }@else {
+    <div class="tw-flex tw-flex-col tw-items-start tw-gap-4 !tw-h-full
+     tw-w-full tw-overflow-auto tw-p-2 tw-relative" #messagesContainer (scroll)="onMessagesContainerScroll($event)">
+
+        @for(message of openedThreadMessages; track message ){
+        @if(message.role === 'user'){
+        <div class="tw-rounded-2xl tw-bg-[#F4F4F4] tw-ms-auto tw-p-2 tw-pl-4 tw-pr-4">
+            <span>{{message.content[0].text.value}}</span>
+        </div>
+        }@else {
+        <div class="tw-flex  tw-flex-row  tw-gap-2">
+            <img src="assets/chatgpt-logo.svg"
+                class="tw-w-[30px] tw-h-[30px] tw-p-1 tw-rounded-full tw-border tw-border-gray-300 tw-object-cover">
+            <markdown [data]="message.content[0].text.value" class="tw-w-full"></markdown>
+        </div>
+        }
+        }
+        @if(responseInStream!==''){
+        <div class="tw-flex  tw-flex-row  tw-gap-2">
+
+            <img src="assets/chatgpt-logo.svg"
+                class="tw-w-[30px] tw-h-[30px] tw-p-1 tw-rounded-full tw-border tw-border-gray-300 tw-object-cover">
+
+            <markdown [data]="responseInStream" class="tw-w-full"></markdown>
+        </div>
+        }
+
+        @if (!isMsgContScrollAtBtm) {
+        <button
+            class="btn btn-sm  rounded-circle btn-light p-1 tw-sticky tw-bottom-2 tw-self-start tw-ms-auto tw-me-auto"
+            (click)="scrollMessagsContainerToBottom()">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#666666">
+                <path d="M480-240 240-480l56-56 144 144v-368h80v368l144-144 56 56-240 240Z" />
+            </svg>
+        </button>
+        }
+
+        @if(!openedThread){
         <span class="tw-text-3xl tw-mt-auto tw-justify-center tw-w-full tw-text-center tw-mb-6">How can I help
             you?</span>
         }
+
     </div>
-    <div class="tw-flex tw-flex-col tw-bg-[#F4F4F4] tw-p-4 tw-rounded-3xl tw-max-w-[500px] tw-w-full">
-        <textarea #msgTextarea class="tw-bg-transparent tw-border-none focus:tw-outline-none focus:tw-border-none"
-            [(ngModel)]="message" placeholder="Enter your message">
+
+    <div class="tw-flex tw-flex-col tw-bg-[#F4F4F4] tw-p-4 tw-rounded-3xl tw-max-w-full tw-w-full">
+        <textarea class="tw-bg-transparent tw-border-none focus:tw-outline-none focus:tw-border-none"
+            [(ngModel)]="currentMessage" placeholder="Enter your message" [disabled]="waitingResponse">
         </textarea>
         <div class="tw-flex tw-flex-row tw-mt-2">
-            <button class="btn btn-sm btn-light p-1">
+            <button class="btn btn-sm btn-light p-1" [disabled]="waitingResponse">
                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
                     fill="#000000">
                     <path
                         d="M720-330q0 104-73 177T470-80q-104 0-177-73t-73-177v-370q0-75 52.5-127.5T400-880q75 0 127.5 52.5T580-700v350q0 46-32 78t-78 32q-46 0-78-32t-32-78v-370h80v370q0 13 8.5 21.5T470-320q13 0 21.5-8.5T500-350v-350q-1-42-29.5-71T400-800q-42 0-71 29t-29 71v370q-1 71 49 120.5T470-160q70 0 119-49.5T640-330v-390h80v390Z" />
                 </svg>
             </button>
-            <button class="btn bg-dark rounded-circle btn-sm p-1 tw-ms-auto" (click)="streamAssistantResponse(); msgTextarea.value = ''">
-                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
-                    fill="#ffffff">
-                    <path d="M440-160v-487L216-423l-56-57 320-320 320 320-56 57-224-224v487h-80Z" />
-                </svg>
-            </button>
+            <button class="btn bg-dark rounded-circle btn-smd p-1 tw-w-[32px] tw-h-[32px] tw-ms-auto"
+                (click)="sendMessageOnStream();" [disabled]="waitingResponse || currentMessage === ''">
+                <div class="tw-w-full tw-h-full tw-flex tw-flex-col tw-items-center tw-justify-center">
+                    @if(!waitingResponse){
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+                        fill="#ffffff">
+                        <path d="M440-160v-487L216-423l-56-57 320-320 320 320-56 57-224-224v487h-80Z" />
+                    </svg>
+                    }@else {
+                    <div class="spinner-border text-light spinner-border-sm" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    }
+                </div>
 
+
+            </button>
         </div>
     </div>
+    }
+
 </div>

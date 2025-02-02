@@ -10,7 +10,7 @@
                             d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm240-80h400v-480H400v480Zm-80 0v-480H160v480h160Zm-160 0v-480 480Zm160 0h80-80Zm0-480h80-80Z" />
                     </svg>
                 </button>
-                <button class="btn btn-light">
+                <button class="btn btn-light" (click)="createNewThread()">
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
                         fill="#000000">
                         <path
@@ -18,14 +18,13 @@
                     </svg>
                 </button>
             }
-            <div class="tw-pl-5 tw-flex tw-flex-row">
+            <div class="tw-pl-5 tw-flex tw-flex-row tw-gap-2">
                 <img src="assets/Angular_Logo.svg" class="tw-w-[100px]">
                 <span class="text-3xl opacity-50">+</span>
-                <img src="assets/chatgpt-seeklogo.svg" class="tw-w-[100px]">
+                <img src="assets/chatgpt-logo-with-text.svg" class="tw-w-[100px]">
             </div>
 
         </div>
-        <!-- <hr /> -->
-        <app-chat-component class="tw-grow tw-p-4"></app-chat-component>
+        <app-chat-component class="tw-grow tw-p-4 tw-overflow-auto" ></app-chat-component>
     </div>
 </div>

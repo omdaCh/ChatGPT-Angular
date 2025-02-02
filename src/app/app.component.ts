@@ -21,6 +21,7 @@ export class AppComponent implements OnInit {
 
   isSideNaveCollapsed: { value: boolean } = { value: false };
 
+
   firebaseConfig = {
     apiKey: "AIzaSyCiWYhF_RMtDulOo3pSeHzOb8iyNxMhqqE",
     authDomain: "chatgpt-angular-9765d.firebaseapp.com",
@@ -54,6 +55,10 @@ export class AppComponent implements OnInit {
 
   openSideNave() {
     this.isSideNaveCollapsed.value = false;
+  }
+
+  createNewThread(){
+    this.chatService.createNewThread();
   }
 
 }
