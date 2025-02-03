@@ -4,6 +4,7 @@ import { Conversation } from './conversation.model';
 import { ChatService } from './services/chat.service';
 import { SidenaveComponent } from './sidenave/sidenave.component';
 import { initializeApp } from "firebase/app";
+import { ThreadService } from './services/thread.service';
 
 
 @Component({
@@ -17,7 +18,7 @@ export class AppComponent implements OnInit {
 
   conversations: Conversation[] = []
 
-  chatService: ChatService = inject(ChatService);
+  threadService: ThreadService = inject(ThreadService);
 
   isSideNaveCollapsed: { value: boolean } = { value: false };
 
@@ -58,7 +59,7 @@ export class AppComponent implements OnInit {
   }
 
   createNewThread(){
-    this.chatService.createNewThread();
+    this.threadService.setOpenedThread(undefined);
   }
 
 }

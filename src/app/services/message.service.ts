@@ -34,7 +34,6 @@ export class MessageService {
                 )
                 .subscribe({
                     next: (event: HttpEvent<string>) => {
-                        console.log("event = " + JSON.stringify(event));
                         if (event.type === HttpEventType.DownloadProgress) {
 
                             const partialText = (event as any).partialText.trim();

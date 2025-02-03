@@ -35,17 +35,16 @@ export class ThreadService {
         return this.http.post(`${this.threadUrl}/new-conversation`, { message });
     }
 
-    createNewThread() {
-        this.openedThread = {
-            thread_id: '',
-            created_at: '',
-            title: '',
-        };
-        this.openedThreadSubject.next(this.openedThread);
-        this.chatThreads.push(this.openedThread);
+    createNewThread(threadFirstMessage: string): Observable<ChatThread> {
+        return this.http.post<ChatThread>(`${this.threadUrl}/create-new-thread`, { threadFirstMessage }).pipe(tap(createdThread => {
+            this.openedThread = createdThread;
+            this.openedThreadSubject.next(this.openedThread);
+            this.chatThreads.push(this.openedThread);
+        }));
+;
     }
 
-    setOpenedThread(thread: ChatThread) {
+    setOpenedThread(thread: ChatThread | undefined) {
         this.openedThread = thread;
         this.openedThreadSubject.next(this.openedThread);
     }

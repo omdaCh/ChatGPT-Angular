@@ -1,4 +1,6 @@
 <div class="tw-flex tw-flex-col tw-items-center tw-grow tw-h-full tw-overflow-auto tw-pl-20 tw-pr-20">
+
+    @if(openedThread){
     @if(opndThrMsgsLoding){
     <div class="tw-w-full tw-h-full tw-flex tw-flex-col tw-gap-1 tw-items-center tw-justify-center">
         <div class="spinner-border text-secondary" role="status">
@@ -6,7 +8,8 @@
         </div>
         <span class="tw-text-sm text-secondary">Loading...</span>
     </div>
-    }@else {
+    }
+    @else {
     <div class="tw-flex tw-flex-col tw-items-start tw-gap-4 !tw-h-full
      tw-w-full tw-overflow-auto tw-p-2 tw-relative" #messagesContainer (scroll)="onMessagesContainerScroll($event)">
 
@@ -43,19 +46,24 @@
         </button>
         }
 
-        @if(!openedThread){
-        <span class="tw-text-3xl tw-mt-auto tw-justify-center tw-w-full tw-text-center tw-mb-6">How can I help
-            you?</span>
-        }
+
 
     </div>
+    }
+    }
+    @else {
+    <span class="tw-text-3xl tw-mt-auto tw-justify-center tw-w-full tw-text-center tw-mb-6">
+        How can I help you?
+    </span>
 
+    }
+    <!-- text box -->
     <div class="tw-flex tw-flex-col tw-bg-[#F4F4F4] tw-p-4 tw-rounded-3xl tw-max-w-full tw-w-full">
         <textarea class="tw-bg-transparent tw-border-none focus:tw-outline-none focus:tw-border-none"
-            [(ngModel)]="currentMessage" placeholder="Enter your message" [disabled]="waitingResponse">
+            [(ngModel)]="currentMessage" placeholder="Enter your message" [disabled]="waitingResponse || opndThrMsgsLoding">
         </textarea>
         <div class="tw-flex tw-flex-row tw-mt-2">
-            <button class="btn btn-sm btn-light p-1" [disabled]="waitingResponse">
+            <button class="btn btn-sm btn-light p-1" [disabled]="waitingResponse || opndThrMsgsLoding">
                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
                     fill="#000000">
                     <path
@@ -63,7 +71,7 @@
                 </svg>
             </button>
             <button class="btn bg-dark rounded-circle btn-smd p-1 tw-w-[32px] tw-h-[32px] tw-ms-auto"
-                (click)="sendMessageOnStream();" [disabled]="waitingResponse || currentMessage === ''">
+                (click)="sendMessageOnStream();" [disabled]="waitingResponse || currentMessage === '' || opndThrMsgsLoding">
                 <div class="tw-w-full tw-h-full tw-flex tw-flex-col tw-items-center tw-justify-center">
                     @if(!waitingResponse){
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
@@ -81,6 +89,5 @@
             </button>
         </div>
     </div>
-    }
 
 </div>

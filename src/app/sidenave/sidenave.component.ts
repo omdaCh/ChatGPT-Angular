@@ -78,8 +78,9 @@ export class SidenaveComponent implements OnInit {
     this.isCollapsed!.value = true;
   }
 
-  createNewThread() {
-    this.threadService.createNewThread();
+  createNewChat() {
+    
+    this.threadService.setOpenedThread(undefined);
   }
 
   openThread(thread: ChatThread) {
@@ -88,10 +89,10 @@ export class SidenaveComponent implements OnInit {
 
   deleteChat(threadId: string) {
     this.threadService.deleteThread(threadId).subscribe({
-      next: (resp) => {
+      next: () => {
         console.log(`Thread ${threadId} has been deleted succesfully`);
       },
-      error: (err) => {
+      error: () => {
         console.log(`Thread ${threadId} deletion failed`);
       }
     });

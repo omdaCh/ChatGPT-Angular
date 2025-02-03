@@ -32,16 +32,19 @@ export class ChatComponent implements OnInit {
 
   protected waitingResponse: boolean = false;
 
-  protected opndThrMsgsLoding : boolean = false;
+  protected opndThrMsgsLoding: boolean = false;
+
 
   constructor() { }
 
   ngOnInit(): void {
     this.threadService.openedThread$.subscribe(openedThread => {
-      if(openedThread){
-        this.openedThread = openedThread;
+
+      this.openedThread = openedThread;
+      if (openedThread) {
         this.loadOpenedThreadMessages()
       }
+
     });
   }
 
@@ -78,7 +81,7 @@ export class ChatComponent implements OnInit {
           this.currentMessage = '';
           this.waitingResponse = false;
         },
-        error: (error) => {
+        error: () => {
           console.log('error sending the message')
         }
       });
@@ -86,32 +89,68 @@ export class ChatComponent implements OnInit {
   }
 
   sendMessageOnStream() {
+    if (this.openedThread) {
+      this.messageService
+        .createUserMessage(this.openedThread!.thread_id, this.currentMessage)
+        .pipe(tap((resp) => {
+          this.openedThreadMessages.push(resp);
+          this.responseInStream = '';
+        }))
+        .pipe(
+          switchMap(() => {
+            return this.messageService.sendMessageOnStream(
+              this.openedThread!.thread_id,
+              'asst_JLZHCjwrwtUal0nxHPdGpsYg'
+            );
+          })
+        )
+        .subscribe({
+          next: (responseInStream) => {
+            if (responseInStream) {
+              this.responseInStream = responseInStream;
+              this.scrollMessagsContainerToBottom();
+            }
+          },
+          error: (err) => {
+            console.error('Error:', err);
+          },
+        });
+    }
+    else {
+      this.threadService.createNewThread(this.currentMessage)
+        // .subscribe((createdThread)=>{
+        //   console.log("created thread = " + JSON.stringify(createdThread))
+        // })
+        .pipe(
+          switchMap((createdThread) => {
+            return this.messageService
+              .createUserMessage(createdThread.thread_id, this.currentMessage)
+          }))
+        .pipe(tap((resp) => {
+          this.openedThreadMessages.push(resp);
+          this.responseInStream = '';
+        }))
+        .pipe(
+          switchMap(() => {
+            return this.messageService.sendMessageOnStream(
+              this.openedThread!.thread_id,
+              'asst_JLZHCjwrwtUal0nxHPdGpsYg'
+            );
+          })
+        )
+        .subscribe({
+          next: (responseInStream) => {
+            if (responseInStream) {
+              this.responseInStream = responseInStream;
+              this.scrollMessagsContainerToBottom();
+            }
+          },
+          error: (err) => {
+            console.error('Error:', err);
+          },
+        });
+    }
 
-    this.messageService
-      .createUserMessage(this.openedThread!.thread_id, this.currentMessage)
-      .pipe(tap((resp) => {
-        this.openedThreadMessages.push(resp);
-        this.responseInStream = '';
-      }))
-      .pipe(
-        switchMap(() => {
-          return this.messageService.sendMessageOnStream(
-            this.openedThread!.thread_id,
-            'asst_JLZHCjwrwtUal0nxHPdGpsYg'
-          );
-        })
-      )
-      .subscribe({
-        next: (responseInStream) => {
-          if (responseInStream) {
-            this.responseInStream =  responseInStream;
-            this.scrollMessagsContainerToBottom();
-          }
-        },
-        error: (err) => {
-          console.error('Error:', err);
-        },
-      });
   }
 
   streamAssistantResponse() {
@@ -126,8 +165,6 @@ export class ChatComponent implements OnInit {
       },
     });
   }
-
-
 
   startNewConversation(firstMessage: string) {
     this.waitingResponse = true;
@@ -146,7 +183,6 @@ export class ChatComponent implements OnInit {
       },
     });
   }
-
 
   onMessagesContainerScroll(event: Event) {
     const element = this.messagesContainer!.nativeElement;
