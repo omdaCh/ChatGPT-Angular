@@ -19,7 +19,7 @@ export class MessageService {
     }
 
     sendMessageOnStream(threadId: string, assistantId: string) {
-        return new Observable<string>((observer) => {
+        return new Observable<any>((observer) => {
             this.http
                 .post(`${this.messageURL}/send-message-on-stream`,
                     {
@@ -35,24 +35,36 @@ export class MessageService {
                 .subscribe({
                     next: (event: HttpEvent<string>) => {
                         if (event.type === HttpEventType.DownloadProgress) {
-
                             const partialText = (event as any).partialText.trim();
                             const lines = partialText.split('\n');
                             let responseInStream: string = '';
                             lines.forEach((line: string) => {
-                                if (line.trim().length !== 0) {
-
-                                    const data = JSON.parse(line.substring(5, line.length));
-                                    if (data.token) {
-                                        responseInStream += data.token;
+                                if (line != '') {
+                                    const responseType: string = line.split(":")[0].trim();
+                                    if (responseType === 'streamChunk') {
+                                        if (line.trim().length !== 0) {
+                                            const data = JSON.parse(line.split("streamChunk:")[1].trim());
+                                            if (data.token) {
+                                                responseInStream += data.token;
+                                            }
+                                        }
                                     }
                                 }
-
                             });
-                            observer.next(responseInStream);
+                            const responseAndType = {
+                                type: 'textInStream',
+                                response: responseInStream
+                            }
+                            observer.next(responseAndType);
                         } else if (event.type === HttpEventType.Response) {
-                            // Handle final response
-                            observer.complete(); // Complete the stream
+                            const eventAsAny = (event as any)
+                            let responseOpject = JSON.parse(eventAsAny.body.split("responseObject:")[1]);
+                            const responseAndType = {
+                                type: 'object',
+                                response: responseOpject
+                            }
+                            observer.next(responseAndType);
+                            observer.complete();
                         }
                     },
                     error: (error) => {
@@ -62,78 +74,12 @@ export class MessageService {
         });
     }
 
-    createUserMessage(threadId: string, message: string) {
-        return this.http.post(`${this.messageURL}/create-user-message`, { threadId: threadId, userMessage: message });
+    stopMessageOnStream(threadId: string) {
+        return this.http.post(`${this.messageURL}/stop-message-on-stream`, { threadId })
     }
 
-    sendMessageOnStream2(threadId: string, assistantId: string, message: string) {
-        return new Observable((observer) => {
-            // Create a POST request with the message in the body
-            fetch("http://localhost:3000/assistant", {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                // Send the message in the body
-            })
-                .then((response) => {
-                    // Check if the response is OK
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-
-                    // Create a reader to read the stream
-                    const reader = response.body?.getReader();
-                    if (!reader) {
-                        throw new Error('Failed to create stream reader');
-                    }
-
-                    // Function to read the stream
-                    const readStream = () => {
-                        reader
-                            .read()
-                            .then(({ done, value }) => {
-                                if (done) {
-                                    observer.complete(); // Stream is complete
-                                    return;
-                                }
-
-                                // Convert the stream chunk to text
-                                const text = new TextDecoder().decode(value);
-
-                                // Split the chunk into individual lines
-                                const lines = text.split('\n');
-
-                                // Process each line
-                                lines.forEach((line) => {
-                                    try {
-                                        // Extract the JSON data from the line
-                                        // const jsonString = line.replace('data: ', '').trim();
-                                        if (line) {
-                                            console.log(line)
-                                            const jsonLine = JSON.parse(line);
-                                            observer.next(jsonLine.data); // Emit each token
-                                        }
-                                    } catch (error) {
-                                        console.error('Error parsing JSON:', error);
-                                    }
-
-                                });
-
-                                // Continue reading the stream
-                                readStream();
-                            })
-                            .catch((error) => {
-                                observer.error(error); // Handle errors
-                            });
-                    };
-
-                    // Start reading the stream
-                    readStream();
-                })
-                .catch((error) => {
-                    observer.error(error); // Handle fetch errors
-                });
-        });
+    createUserMessage(threadId: string, message: string, files: string[]) {
+        return this.http.post(`${this.messageURL}/create-user-message`, { threadId: threadId, userMessage: message, files: files });
     }
+
 }

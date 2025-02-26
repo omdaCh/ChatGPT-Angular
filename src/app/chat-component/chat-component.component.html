@@ -1,4 +1,4 @@
-<div class="tw-flex tw-flex-col tw-items-center tw-grow tw-h-full tw-overflow-auto tw-pl-20 tw-pr-20">
+<div class="tw-flex tw-flex-col tw-items-center tw-grow tw-h-full tw-overflow-auto sm:tw-pl-20 sm:tw-pr-20 tw-z-0">
 
     @if(openedThread){
     @if(opndThrMsgsLoding){
@@ -12,27 +12,54 @@
     @else {
     <div class="tw-flex tw-flex-col tw-items-start tw-gap-4 !tw-h-full
      tw-w-full tw-overflow-auto tw-p-2 tw-relative" #messagesContainer (scroll)="onMessagesContainerScroll($event)">
-
+    
         @for(message of openedThreadMessages; track message ){
         @if(message.role === 'user'){
-        <div class="tw-rounded-2xl tw-bg-[#F4F4F4] tw-ms-auto tw-p-2 tw-pl-4 tw-pr-4">
+        <div class="tw-flex tw-flex-col tw-gap-1 tw-rounded-2xl tw-bg-[#F4F4F4] tw-ms-auto tw-p-2 tw-pl-4 tw-pr-4">
+            <div class="tw-flex tw-flex-row tw-gap-1">
+                @for(attachement of message.attachments; track attachement){
+                    @if(this.fileIdsObjectsMap?.get(attachement.file_id)){
+                    <div
+                        class="tw-flex tw-flex-row tw-gap-3  tw-relative tw-p-2 tw-bg-white tw-rounded-xl tw-items-center tw-justify-center tw-mb-2">
+                        <div class="tw-flex tw-flex-col tw-relative tw-items-center tw-justify-center tw-min-w-[35px]">
+                           
+                            @if(fileIdsObjectsMap?.get(attachement.file_id).purpose === 'vision'){
+                            <img src="assets/icons8-image.svg" class="tw-min-w-[35px]">
+                            }@else {
+                            <img src="assets/icons8-file.svg" class="tw-min-w-[35px]">
+                            }
+                        </div>
+                        <div class="tw-flex tw-flex-col tw-truncate">
+                            <span class="tw-truncate">{{this.fileIdsObjectsMap?.get(attachement.file_id).filename}}</span>
+                        </div>
+                    </div>
+                    }
+                    }
+            </div>
             <span>{{message.content[0].text.value}}</span>
         </div>
         }@else {
         <div class="tw-flex  tw-flex-row  tw-gap-2">
             <img src="assets/chatgpt-logo.svg"
                 class="tw-w-[30px] tw-h-[30px] tw-p-1 tw-rounded-full tw-border tw-border-gray-300 tw-object-cover">
-            <markdown [data]="message.content[0].text.value" class="tw-w-full"></markdown>
+            <markdown [data]="message.content[0].text.value"></markdown>
         </div>
         }
         }
-        @if(responseInStream!==''){
+        @if(responseStatus !== 'terminated'){
         <div class="tw-flex  tw-flex-row  tw-gap-2">
-
             <img src="assets/chatgpt-logo.svg"
                 class="tw-w-[30px] tw-h-[30px] tw-p-1 tw-rounded-full tw-border tw-border-gray-300 tw-object-cover">
+            @if(responseStatus==='waitingToStart'){
+            <div>
+                <div class="spinner-grow spinner-grow-sm" role="status">
 
+                </div>
+            </div>
+
+            }
             <markdown [data]="responseInStream" class="tw-w-full"></markdown>
+
         </div>
         }
 
@@ -45,9 +72,6 @@
             </svg>
         </button>
         }
-
-
-
     </div>
     }
     }
@@ -58,12 +82,69 @@
 
     }
     <!-- text box -->
-    <div class="tw-flex tw-flex-col tw-bg-[#F4F4F4] tw-p-4 tw-rounded-3xl tw-max-w-full tw-w-full">
+    <div class="tw-flex tw-flex-col tw-bg-[#F4F4F4] tw-p-4 tw-rounded-3xl tw-max-w-full tw-w-full tw-mt-5">
+        @if(filesUploadState.size > 0){
+        <div class="tw-flex tw-flex-row tw-gap-1 tw-mb-5">
+            <!-- @for(fileUploadState of filesUploadState; track fileUploadState){ -->
+            @for(file of filesUploadState.keys(); track file){
+            <div
+                class="tw-flex tw-flex-row tw-gap-3 tw-w-[200px] tw-relative tw-p-2 tw-bg-white tw-rounded-2xl tw-items-center tw-justify-center">
+                <div class="tw-absolute tw-end-[-6px] tw-top-[-6px] tw-cursor-pointer  hover:opacity-80"
+                    (click)="deleteFile(file)">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"
+                        fill="#666666">
+                        <path
+                            d="m336-280 144-144 144 144 56-56-144-144 144-144-56-56-144 144-144-144-56 56 144 144-144 144 56 56ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Z" />
+                    </svg>
+                </div>
+
+                <div class="tw-flex tw-flex-col tw-relative tw-items-center tw-justify-center tw-min-w-[35px]">
+                    @if(file.type.startsWith("image/")){
+                    <img src="assets/icons8-image.svg" class="tw-min-w-[35px]">
+                    }@else {
+                    <img src="assets/icons8-file.svg" class="tw-min-w-[35px]">
+                    }
+
+                    @if(filesUploadState.get(file) == 'uploading'){
+                    <div class=" tw-absolute  text-light spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    }
+                </div>
+
+                <div class="tw-flex tw-flex-col tw-truncate">
+                    <span class="tw-truncate">{{file.name}}</span>
+                    <!-- <span class="tw-text-xs">{{file.size}} bytes</span> -->
+                    @if(filesIds.get(file)){
+                    <span class="tw-text-[10px]">id: {{filesIds.get(file)}}</span>
+                    }
+
+                    @if(filesUploadState.get(file) == 'error'){
+                    <div class="tw-flex tw-flex-row">
+                        <span class="text-danger tw-text-xs">Failed uploading</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px"
+                            fill="#EA3323">
+                            <path
+                                d="M480-280q17 0 28.5-11.5T520-320q0-17-11.5-28.5T480-360q-17 0-28.5 11.5T440-320q0 17 11.5 28.5T480-280Zm-40-160h80v-240h-80v240Zm40 360q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z" />
+                        </svg>
+                    </div>
+                    }
+                </div>
+
+
+
+
+            </div>
+            }
+        </div>
+        }
         <textarea class="tw-bg-transparent tw-border-none focus:tw-outline-none focus:tw-border-none"
-            [(ngModel)]="currentMessage" placeholder="Enter your message" [disabled]="waitingResponse || opndThrMsgsLoding">
+            [(ngModel)]="currentMessage" placeholder="Enter your message"
+            [disabled]="(responseStatus == 'waitingToStart') || opndThrMsgsLoding">
         </textarea>
         <div class="tw-flex tw-flex-row tw-mt-2">
-            <button class="btn btn-sm btn-light p-1" [disabled]="waitingResponse || opndThrMsgsLoding">
+            <button class="btn btn-sm btn-light p-1" (click)="addFile()"
+                [disabled]="(responseStatus == 'waitingToStart') || opndThrMsgsLoding">
                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
                     fill="#000000">
                     <path
@@ -71,18 +152,31 @@
                 </svg>
             </button>
             <button class="btn bg-dark rounded-circle btn-smd p-1 tw-w-[32px] tw-h-[32px] tw-ms-auto"
-                (click)="sendMessageOnStream();" [disabled]="waitingResponse || currentMessage === '' || opndThrMsgsLoding">
+                (click)="responseStatus == 'terminated'?sendMessageOnStream():stopMessageOnStream()"
+                [disabled]="(responseStatus == 'waitingToStart') || currentMessage === '' || opndThrMsgsLoding">
                 <div class="tw-w-full tw-h-full tw-flex tw-flex-col tw-items-center tw-justify-center">
-                    @if(!waitingResponse){
+                    @switch (responseStatus) {
+                    @case ('terminated') {
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
                         fill="#ffffff">
                         <path d="M440-160v-487L216-423l-56-57 320-320 320 320-56 57-224-224v487h-80Z" />
                     </svg>
-                    }@else {
+                    }
+                    @case('waitingToStart'){
                     <div class="spinner-border text-light spinner-border-sm" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
                     }
+                    @case ('inStreaming') {
+                    <svg xmlns="http://www.w3.org/2000/svg" height="14px" viewBox="0 -960 960 960" width="14px"
+                        fill="#ffffff">
+                        <path
+                            d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Z" />
+                    </svg>
+                    }
+
+                    }
+
                 </div>
 
 

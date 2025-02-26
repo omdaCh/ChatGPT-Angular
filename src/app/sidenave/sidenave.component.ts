@@ -2,7 +2,6 @@ import { ChangeDetectorRef, Component, inject, Input, OnInit } from '@angular/co
 import { ChatThread } from '../types';
 import { CommonModule } from '@angular/common';
 import { animate, state, style, transition, trigger } from '@angular/animations';
-import { ChatService } from '../services/chat.service';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { AutofocusDirective } from '../directives/AutofocusDirective.directive';
 import { ThreadService } from '../services/thread.service';
@@ -52,7 +51,9 @@ export class SidenaveComponent implements OnInit {
 
   threadToRenameId: string | null = null;
 
-  // private cdr: ChangeDetectorRef = inject(ChangeDetectorRef);
+  threadOnHoverId: string | null = null;
+
+  threadIdToDelete: string | null = null;
 
   constructor(private cdr: ChangeDetectorRef) {
 
@@ -79,11 +80,14 @@ export class SidenaveComponent implements OnInit {
   }
 
   createNewChat() {
-    
     this.threadService.setOpenedThread(undefined);
   }
 
-  openThread(thread: ChatThread) {
+  openThread(event: Event, thread: ChatThread) {
+    const target = event.target as HTMLElement;
+    if (target.id === 'dropdownDiv' || target.closest('#dropdownDiv')) {
+      return;
+    }
     this.threadService.setOpenedThread(thread);
   }
 
@@ -91,6 +95,7 @@ export class SidenaveComponent implements OnInit {
     this.threadService.deleteThread(threadId).subscribe({
       next: () => {
         console.log(`Thread ${threadId} has been deleted succesfully`);
+
       },
       error: () => {
         console.log(`Thread ${threadId} deletion failed`);
@@ -104,7 +109,7 @@ export class SidenaveComponent implements OnInit {
 
   saveThreadNameChange(threadId: string, newTitle: string) {
     this.threadService.updateThreadTitle(threadId, newTitle).subscribe({
-      next: (resp) => {
+      next: () => {
         const threadIndex = this.threads.findIndex((thread) => thread.thread_id === threadId);
         this.threads[threadIndex].title = newTitle;
         this.threadToRenameId = null;

@@ -27,8 +27,13 @@ export class ThreadService {
         }));
     }
 
-    deleteThread(threadId: string): Observable<any> {
-        return this.http.delete(`${this.threadUrl}/${threadId}`);
+    deleteThread(threadToDeleteId: string): Observable<any> {
+        return this.http.delete(`${this.threadUrl}/${threadToDeleteId}`).pipe(tap(() => {
+            this.chatThreads = this.chatThreads.filter(thread => thread.thread_id !== threadToDeleteId);
+            if (this.openedThread?.thread_id == threadToDeleteId)
+                this.setOpenedThread(undefined);
+        }
+        ));
     }
 
     startNewConversation(message: string): Observable<any> {
@@ -41,7 +46,7 @@ export class ThreadService {
             this.openedThreadSubject.next(this.openedThread);
             this.chatThreads.push(this.openedThread);
         }));
-;
+        ;
     }
 
     setOpenedThread(thread: ChatThread | undefined) {

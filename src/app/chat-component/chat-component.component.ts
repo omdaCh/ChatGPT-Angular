@@ -1,26 +1,27 @@
-import { Component, ElementRef, inject, OnInit, ViewChild, viewChild } from '@angular/core';
+import { Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ChatService } from '../services/chat.service';
 import { MarkdownModule } from 'ngx-markdown';
-import { ChatThread } from '../types';
+import { ChatThread, FilePurpose, ResponseStatue, UploadState } from '../types';
 import { ThreadService } from '../services/thread.service';
 import { MessageService } from '../services/message.service';
-import { switchMap, tap, timeout } from 'rxjs';
+import { ObjectUnsubscribedError, Observable, switchMap, tap } from 'rxjs';
+import { FileService } from '../services/file.service';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-chat-component',
-  imports: [FormsModule, MarkdownModule],
+  imports: [FormsModule, MarkdownModule, CommonModule],
   templateUrl: './chat-component.component.html',
   styleUrl: './chat-component.component.scss',
 })
 export class ChatComponent implements OnInit {
+
   currentMessage = '';
   responseInStream = '';
 
   openedThread: ChatThread | undefined;
 
   private threadService: ThreadService = inject(ThreadService);
-  private chatService: ChatService = inject(ChatService);
 
   private messageService: MessageService = inject(MessageService);
   protected openedThreadMessages: any[] = [];
@@ -30,10 +31,18 @@ export class ChatComponent implements OnInit {
 
   isMsgContScrollAtBtm: boolean = true;
 
-  protected waitingResponse: boolean = false;
 
   protected opndThrMsgsLoding: boolean = false;
 
+  protected responseStatus: ResponseStatue = 'terminated';
+
+  protected filesUploadState: Map<File, UploadState> = new Map<File, UploadState>();
+
+  protected filesIds: Map<File, string> = new Map<File, string>();
+
+  protected fileService: FileService = inject(FileService);
+
+  protected fileIdsObjectsMap:Map<string,any> | null = null;
 
   constructor() { }
 
@@ -41,147 +50,125 @@ export class ChatComponent implements OnInit {
     this.threadService.openedThread$.subscribe(openedThread => {
 
       this.openedThread = openedThread;
-      if (openedThread) {
+      if (this.openedThread) {
         this.loadOpenedThreadMessages()
       }
-
     });
+
+    this.fileIdsObjectsMap = this.fileService.getFileIdsObjectsMap();
+
   }
 
   loadOpenedThreadMessages() {
     this.opndThrMsgsLoding = true;
     this.openedThreadMessages = [];
     if (this.openedThread?.thread_id) {
-      this.messageService.getThreadMessages(this.openedThread?.thread_id).subscribe({
-        next: (resp) => {
-          this.openedThreadMessages = resp.reverse();
-          this.opndThrMsgsLoding = false;
-          setTimeout(() => {
-            this.scrollMessagsContainerToBottom();
-          }, 50);
+      this.messageService.getThreadMessages(this.openedThread?.thread_id)
+        .pipe(tap(resp => {
+          resp.forEach(message => {
+            if (message.role === 'user') {
+              message.attachments.forEach((attachment: any) => {
+                this.fileService.loadFile(attachment.file_id)
+              })
+            }
+          })
+        }))
+        .subscribe({
+          next: (resp) => {
+            this.openedThreadMessages = resp.reverse();
+            this.opndThrMsgsLoding = false;
+            setTimeout(() => {
+              this.scrollMessagsContainerToBottom();
+            }, 50);
 
-        },
-        error: (error) => {
-          console.log(`failed to load messages error : ` + error);
-        }
-      });
-    }
-  }
-
-  sendMessage() {
-    this.waitingResponse = true;
-    this.scrollMessagsContainerToBottom();
-    if (this.openedThread?.thread_id === '') {
-      this.startNewConversation(this.currentMessage);
-
-    } else {
-      this.messageService.sendMessage(this.openedThread!.thread_id, 'asst_JLZHCjwrwtUal0nxHPdGpsYg', this.currentMessage).subscribe({
-        next: (resp) => {
-          this.openedThreadMessages = (resp as any[]).reverse();
-          this.currentMessage = '';
-          this.waitingResponse = false;
-        },
-        error: () => {
-          console.log('error sending the message')
-        }
-      });
+          },
+          error: (error) => {
+            console.log(`failed to load messages error : ` + error);
+          }
+        });
     }
   }
 
   sendMessageOnStream() {
+
+
+    const messageFils = Array.from(this.filesIds.values());
+
+    const handleMessageStream = (threadId: string) => {
+      return this.messageService
+        .createUserMessage(threadId, this.currentMessage, messageFils)
+        .pipe(
+          tap((createdMessage) => {
+            this.openedThreadMessages.push(createdMessage);
+            this.responseInStream = '';
+            this.currentMessage = '';
+            this.responseStatus = 'waitingToStart';
+            this.filesUploadState.clear();
+          }),
+          switchMap(() =>
+            this.messageService.sendMessageOnStream(
+              threadId,
+              'asst_JLZHCjwrwtUal0nxHPdGpsYg'
+            )
+          )
+        );
+    };
+
+    const handleResponse = {
+      next: (response: any) => this.nextResponceSecuss(response),
+      error: (err: any) => console.error('Error:', err),
+      complete: () => this.handleMessageResponseCompletion()
+    };
+
     if (this.openedThread) {
-      this.messageService
-        .createUserMessage(this.openedThread!.thread_id, this.currentMessage)
-        .pipe(tap((resp) => {
-          this.openedThreadMessages.push(resp);
-          this.responseInStream = '';
-        }))
+      handleMessageStream(this.openedThread.thread_id).subscribe(handleResponse);
+    } else {
+      this.threadService
+        .createNewThread(this.currentMessage)
+        .pipe(tap((createdThread) =>
+          this.openedThread = createdThread))
         .pipe(
-          switchMap(() => {
-            return this.messageService.sendMessageOnStream(
-              this.openedThread!.thread_id,
-              'asst_JLZHCjwrwtUal0nxHPdGpsYg'
-            );
-          })
+          switchMap((createdThread) =>
+            handleMessageStream(createdThread.thread_id)
+          )
         )
-        .subscribe({
-          next: (responseInStream) => {
-            if (responseInStream) {
-              this.responseInStream = responseInStream;
-              this.scrollMessagsContainerToBottom();
-            }
-          },
-          error: (err) => {
-            console.error('Error:', err);
-          },
-        });
+        .subscribe(handleResponse);
     }
-    else {
-      this.threadService.createNewThread(this.currentMessage)
-        // .subscribe((createdThread)=>{
-        //   console.log("created thread = " + JSON.stringify(createdThread))
-        // })
-        .pipe(
-          switchMap((createdThread) => {
-            return this.messageService
-              .createUserMessage(createdThread.thread_id, this.currentMessage)
-          }))
-        .pipe(tap((resp) => {
-          this.openedThreadMessages.push(resp);
-          this.responseInStream = '';
-        }))
-        .pipe(
-          switchMap(() => {
-            return this.messageService.sendMessageOnStream(
-              this.openedThread!.thread_id,
-              'asst_JLZHCjwrwtUal0nxHPdGpsYg'
-            );
-          })
-        )
-        .subscribe({
-          next: (responseInStream) => {
-            if (responseInStream) {
-              this.responseInStream = responseInStream;
-              this.scrollMessagsContainerToBottom();
-            }
-          },
-          error: (err) => {
-            console.error('Error:', err);
-          },
-        });
-    }
-
   }
 
-  streamAssistantResponse() {
-    this.responseInStream = ''; // Clear previous response
-    this.chatService.streamAssistantResponse2().subscribe({
-      next: (token) => {
-        this.responseInStream += token; // Append each token to the response
-
-      },
-      error: (err) => {
-        console.error('Error:', err);
-      },
-    });
+  handleMessageResponseCompletion() {
+    // this.messageService.getThreadLastMessageResponse();
+    this.responseStatus = 'terminated';
+    this.responseInStream = ''
   }
 
-  startNewConversation(firstMessage: string) {
-    this.waitingResponse = true;
-    this.threadService.startNewConversation(firstMessage).subscribe({
-      next: (response) => {
-        console.log('New conversation started:', response);
-        this.openedThread!.thread_id = response.thread_id;
-        this.openedThread!.created_at = response.created_at;
-        this.openedThread!.title = response.title;
-        this.responseInStream = response.response;
-        this.currentMessage = '';
-        this.waitingResponse = false;
+  stopMessageOnStream() {
+    this.messageService.stopMessageOnStream(this.openedThread!.thread_id).subscribe({
+      next: (resp) => {
+
       },
       error: (error) => {
-        console.error('Error starting conversation:', error);
-      },
-    });
+
+      }
+    })
+  }
+
+  nextResponceSecuss(response: any) {
+    if (response?.type == 'textInStream') {
+      if (this.responseStatus === 'waitingToStart') {
+        this.responseStatus = 'inStreaming';
+      }
+
+      this.responseInStream = response.response + ' <span class="tw-text-sm">⚫</span>';
+      this.scrollMessagsContainerToBottom();
+
+    }
+    else if (response?.type == 'object') {
+      this.openedThreadMessages.push(response.response);
+      this.responseStatus = 'terminated';
+      this.responseInStream = ''
+    }
+
   }
 
   onMessagesContainerScroll(event: Event) {
@@ -202,5 +189,60 @@ export class ChatComponent implements OnInit {
     } catch (err) {
       console.error('Error scrolling to bottom:', err);
     }
+  }
+
+  addFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    // input.accept = 'image/jpeg';
+
+    input.onchange = (event: any) => {
+      const file: File = event.target.files[0];
+
+      if (file) {
+        // this.readFile(file);
+        this.filesUploadState.set(file, 'uploading');
+
+
+        let filePurpose: FilePurpose = file.type.startsWith("image/") ? 'vision' : 'assistants';
+
+
+        this.fileService.uploadAndCreateFile(file, filePurpose).subscribe({
+          next: (resp: any) => {
+            console.log('resp = ' + JSON.stringify(resp));
+            this.filesIds.set(file, resp.file.id)
+            this.filesUploadState.set(file, 'uploaded');
+          },
+          error: (error) => {
+            console.error('Upload failed', error);
+            this.filesUploadState.set(file, 'error');
+          }
+        });
+      }
+    };
+
+    input.click();
+  }
+
+  deleteFile(fileToDelete: File) {
+    this.filesUploadState.delete(fileToDelete);
+    this.filesIds.delete(fileToDelete);
+  }
+
+  getFilesUploadStateKeys() {
+    return Array.from(this.filesUploadState.keys());
+  }
+
+  // getFileIdsObjectsMapKeys(){
+  //   return Array.from(this.fileIdsObjectsMap?.keys());
+  // }
+
+  getFileObject(fileId: string): Observable<any> | null {
+    console.log('getFileObject fileId = ' + fileId);
+    return this.fileService.getFileObject(fileId);
+  }
+
+  objectAsJson(object: any): string {
+    return JSON.stringify(object)
   }
 }
