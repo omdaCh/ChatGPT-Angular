@@ -116,8 +116,8 @@ export class SidenaveComponent implements OnInit {
         this.cdr.detectChanges();
 
       },
-      error: (err) => {
-
+      error: () => {
+        console.log(`Error saving the thread name ${newTitle}`);
       }
     })
 

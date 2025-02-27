@@ -24,9 +24,9 @@
                         <div class="tw-flex tw-flex-col tw-relative tw-items-center tw-justify-center tw-min-w-[35px]">
                            
                             @if(fileIdsObjectsMap?.get(attachement.file_id).purpose === 'vision'){
-                            <img src="assets/icons8-image.svg" class="tw-min-w-[35px]">
+                            <img src="assets/icons8-image.svg" alt="Image attachment" class="tw-min-w-[35px]">
                             }@else {
-                            <img src="assets/icons8-file.svg" class="tw-min-w-[35px]">
+                            <img src="assets/icons8-file.svg" alt="File attachment" class="tw-min-w-[35px]">
                             }
                         </div>
                         <div class="tw-flex tw-flex-col tw-truncate">
@@ -40,7 +40,7 @@
         </div>
         }@else {
         <div class="tw-flex  tw-flex-row  tw-gap-2">
-            <img src="assets/chatgpt-logo.svg"
+            <img src="assets/chatgpt-logo.svg" alt="ChatGPT Logo"
                 class="tw-w-[30px] tw-h-[30px] tw-p-1 tw-rounded-full tw-border tw-border-gray-300 tw-object-cover">
             <markdown [data]="message.content[0].text.value"></markdown>
         </div>
@@ -48,7 +48,7 @@
         }
         @if(responseStatus !== 'terminated'){
         <div class="tw-flex  tw-flex-row  tw-gap-2">
-            <img src="assets/chatgpt-logo.svg"
+            <img src="assets/chatgpt-logo.svg" alt="ChatGPT Logo"
                 class="tw-w-[30px] tw-h-[30px] tw-p-1 tw-rounded-full tw-border tw-border-gray-300 tw-object-cover">
             @if(responseStatus==='waitingToStart'){
             <div>
@@ -100,12 +100,12 @@
 
                 <div class="tw-flex tw-flex-col tw-relative tw-items-center tw-justify-center tw-min-w-[35px]">
                     @if(file.type.startsWith("image/")){
-                    <img src="assets/icons8-image.svg" class="tw-min-w-[35px]">
+                    <img src="assets/icons8-image.svg" alt="Image file icon" class="tw-min-w-[35px]">
                     }@else {
-                    <img src="assets/icons8-file.svg" class="tw-min-w-[35px]">
+                    <img src="assets/icons8-file.svg" alt="Document file icon" class="tw-min-w-[35px]">
                     }
 
-                    @if(filesUploadState.get(file) == 'uploading'){
+                    @if(filesUploadState.get(file) === 'uploading'){
                     <div class=" tw-absolute  text-light spinner-border" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
@@ -119,7 +119,7 @@
                     <span class="tw-text-[10px]">id: {{filesIds.get(file)}}</span>
                     }
 
-                    @if(filesUploadState.get(file) == 'error'){
+                    @if(filesUploadState.get(file) === 'error'){
                     <div class="tw-flex tw-flex-row">
                         <span class="text-danger tw-text-xs">Failed uploading</span>
                         <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px"
@@ -140,11 +140,11 @@
         }
         <textarea class="tw-bg-transparent tw-border-none focus:tw-outline-none focus:tw-border-none"
             [(ngModel)]="currentMessage" placeholder="Enter your message"
-            [disabled]="(responseStatus == 'waitingToStart') || opndThrMsgsLoding">
+            [disabled]="(responseStatus === 'waitingToStart') || opndThrMsgsLoding">
         </textarea>
         <div class="tw-flex tw-flex-row tw-mt-2">
             <button class="btn btn-sm btn-light p-1" (click)="addFile()"
-                [disabled]="(responseStatus == 'waitingToStart') || opndThrMsgsLoding">
+                [disabled]="(responseStatus === 'waitingToStart') || opndThrMsgsLoding">
                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
                     fill="#000000">
                     <path
@@ -152,8 +152,8 @@
                 </svg>
             </button>
             <button class="btn bg-dark rounded-circle btn-smd p-1 tw-w-[32px] tw-h-[32px] tw-ms-auto"
-                (click)="responseStatus == 'terminated'?sendMessageOnStream():stopMessageOnStream()"
-                [disabled]="(responseStatus == 'waitingToStart') || currentMessage === '' || opndThrMsgsLoding">
+                (click)="responseStatus === 'terminated'?sendMessageOnStream():stopMessageOnStream()"
+                [disabled]="(responseStatus === 'waitingToStart') || currentMessage === '' || opndThrMsgsLoding">
                 <div class="tw-w-full tw-h-full tw-flex tw-flex-col tw-items-center tw-justify-center">
                     @switch (responseStatus) {
                     @case ('terminated') {

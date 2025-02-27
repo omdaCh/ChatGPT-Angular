@@ -1,7 +1,6 @@
 {
   "hosting": {
-    "site": "chatgpt-with-angular",
-    "public": "dist/browser",
+    "source": ".",
     "ignore": [
       "firebase.json",
       "**/.*",
