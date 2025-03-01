@@ -24,7 +24,6 @@ jobs:
           cache: npm
 
       - name: Install Angular dependencies
-        working-directory: frontend
         run: npm ci
 
       - name: Lint Angular code
