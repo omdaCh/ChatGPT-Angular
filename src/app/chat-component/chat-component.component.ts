@@ -1,12 +1,16 @@
 import { Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MarkdownModule } from 'ngx-markdown';
-import { ChatThread, FilePurpose, ResponseStatue, UploadState } from '../types';
+import { FilePurpose, ResponseStatus, UploadState } from '../types';
 import { ThreadService } from '../services/thread.service';
 import { MessageService } from '../services/message.service';
-import { ObjectUnsubscribedError, Observable, switchMap, tap } from 'rxjs';
+import { Observable, switchMap, tap } from 'rxjs';
 import { FileService } from '../services/file.service';
 import { CommonModule } from '@angular/common';
+import { Attachment, GPTMessage } from '../models/gpt-message.model';
+import { StreamOrCompleteMsgResp } from '../models/stream-message.model';
+import { GPTFile } from '../models/file.model';
+import { ChatThread } from '../models/chat-thread.model';
 
 @Component({
   selector: 'app-chat-component',
@@ -24,17 +28,17 @@ export class ChatComponent implements OnInit {
   private threadService: ThreadService = inject(ThreadService);
 
   private messageService: MessageService = inject(MessageService);
-  protected openedThreadMessages: any[] = [];
+  protected openedThreadMessages: GPTMessage[] = [];
 
   @ViewChild('messagesContainer')
   messagesContainer: ElementRef | undefined;
 
-  isMsgContScrollAtBtm: boolean = true;
+  isMsgContScrollAtBtm = true;
 
 
-  protected opndThrMsgsLoding: boolean = false;
+  protected opndThrMsgsLoding = false;
 
-  protected responseStatus: ResponseStatue = 'terminated';
+  protected responseStatus: ResponseStatus = 'terminated';
 
   protected filesUploadState: Map<File, UploadState> = new Map<File, UploadState>();
 
@@ -42,13 +46,13 @@ export class ChatComponent implements OnInit {
 
   protected fileService: FileService = inject(FileService);
 
-  protected fileIdsObjectsMap:Map<string,any> | null = null;
+  protected fileIdsObjectsMap: Map<string, GPTFile> | null = null;
 
-  constructor() { }
 
   ngOnInit(): void {
     this.threadService.openedThread$.subscribe(openedThread => {
-
+      
+      this.opndThrMsgsLoding = false;
       this.openedThread = openedThread;
       if (this.openedThread) {
         this.loadOpenedThreadMessages()
@@ -67,7 +71,7 @@ export class ChatComponent implements OnInit {
         .pipe(tap(resp => {
           resp.forEach(message => {
             if (message.role === 'user') {
-              message.attachments.forEach((attachment: any) => {
+              message!.attachments!.forEach((attachment: Attachment) => {
                 this.fileService.loadFile(attachment.file_id)
               })
             }
@@ -90,7 +94,7 @@ export class ChatComponent implements OnInit {
   }
 
   sendMessageOnStream() {
-
+    this.responseStatus = 'waitingToStart';
 
     const messageFils = Array.from(this.filesIds.values());
 
@@ -98,11 +102,10 @@ export class ChatComponent implements OnInit {
       return this.messageService
         .createUserMessage(threadId, this.currentMessage, messageFils)
         .pipe(
-          tap((createdMessage) => {
+          tap((createdMessage: GPTMessage) => {
             this.openedThreadMessages.push(createdMessage);
             this.responseInStream = '';
             this.currentMessage = '';
-            this.responseStatus = 'waitingToStart';
             this.filesUploadState.clear();
           }),
           switchMap(() =>
@@ -115,8 +118,8 @@ export class ChatComponent implements OnInit {
     };
 
     const handleResponse = {
-      next: (response: any) => this.nextResponceSecuss(response),
-      error: (err: any) => console.error('Error:', err),
+      next: (response: StreamOrCompleteMsgResp) => this.nextResponceSecuss(response),
+      error: (err: Error) => console.error('Error:', err),
       complete: () => this.handleMessageResponseCompletion()
     };
 
@@ -137,34 +140,35 @@ export class ChatComponent implements OnInit {
   }
 
   handleMessageResponseCompletion() {
-    // this.messageService.getThreadLastMessageResponse();
     this.responseStatus = 'terminated';
     this.responseInStream = ''
   }
 
   stopMessageOnStream() {
+    this.responseStatus = 'waitingToStop'
     this.messageService.stopMessageOnStream(this.openedThread!.thread_id).subscribe({
       next: (resp) => {
-
+           console.log(resp)
+           this.responseStatus = 'terminated'
       },
       error: (error) => {
-
+        console.log(error)
       }
     })
   }
 
-  nextResponceSecuss(response: any) {
+  nextResponceSecuss(response: StreamOrCompleteMsgResp) {
     if (response?.type == 'textInStream') {
-      if (this.responseStatus === 'waitingToStart') {
+      if (this.responseStatus !== 'inStreaming') {
         this.responseStatus = 'inStreaming';
       }
 
-      this.responseInStream = response.response + ' <span class="tw-text-sm">⚫</span>';
+      this.responseInStream = response.textInStream + ' <span class="tw-text-sm">⚫</span>';
       this.scrollMessagsContainerToBottom();
 
     }
-    else if (response?.type == 'object') {
-      this.openedThreadMessages.push(response.response);
+    else if (response?.type == 'messageObject') {
+      this.openedThreadMessages.push((response.finaleMessageObject as GPTMessage));
       this.responseStatus = 'terminated';
       this.responseInStream = ''
     }
@@ -194,23 +198,17 @@ export class ChatComponent implements OnInit {
   addFile() {
     const input = document.createElement('input');
     input.type = 'file';
-    // input.accept = 'image/jpeg';
 
-    input.onchange = (event: any) => {
-      const file: File = event.target.files[0];
+    input.onchange = (event: Event) => {
+      const target = event.target as HTMLInputElement;
+      const file: File | undefined = target.files?.[0];
 
       if (file) {
-        // this.readFile(file);
         this.filesUploadState.set(file, 'uploading');
-
-
-        let filePurpose: FilePurpose = file.type.startsWith("image/") ? 'vision' : 'assistants';
-
-
+        const filePurpose: FilePurpose = file.type.startsWith("image/") ? 'vision' : 'assistants';
         this.fileService.uploadAndCreateFile(file, filePurpose).subscribe({
-          next: (resp: any) => {
-            console.log('resp = ' + JSON.stringify(resp));
-            this.filesIds.set(file, resp.file.id)
+          next: (gptFile: GPTFile) => {
+            this.filesIds.set(file, gptFile.id)
             this.filesUploadState.set(file, 'uploaded');
           },
           error: (error) => {
@@ -220,6 +218,8 @@ export class ChatComponent implements OnInit {
         });
       }
     };
+
+
 
     input.click();
   }
@@ -233,16 +233,13 @@ export class ChatComponent implements OnInit {
     return Array.from(this.filesUploadState.keys());
   }
 
-  // getFileIdsObjectsMapKeys(){
-  //   return Array.from(this.fileIdsObjectsMap?.keys());
-  // }
 
-  getFileObject(fileId: string): Observable<any> | null {
+  getGPTFile(fileId: string): Observable<GPTFile> | null {
     console.log('getFileObject fileId = ' + fileId);
-    return this.fileService.getFileObject(fileId);
+    return this.fileService.getGPTFile(fileId);
   }
 
-  objectAsJson(object: any): string {
+  objectAsJson(object: unknown): string {
     return JSON.stringify(object)
   }
 }

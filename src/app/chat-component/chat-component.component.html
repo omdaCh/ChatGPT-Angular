@@ -4,7 +4,6 @@
     @if(opndThrMsgsLoding){
     <div class="tw-w-full tw-h-full tw-flex tw-flex-col tw-gap-1 tw-items-center tw-justify-center">
         <div class="spinner-border text-secondary" role="status">
-            <!-- <span class="sr-only">Loading...</span> -->
         </div>
         <span class="tw-text-sm text-secondary">Loading...</span>
     </div>
@@ -12,37 +11,37 @@
     @else {
     <div class="tw-flex tw-flex-col tw-items-start tw-gap-4 !tw-h-full
      tw-w-full tw-overflow-auto tw-p-2 tw-relative" #messagesContainer (scroll)="onMessagesContainerScroll($event)">
-    
+
         @for(message of openedThreadMessages; track message ){
         @if(message.role === 'user'){
         <div class="tw-flex tw-flex-col tw-gap-1 tw-rounded-2xl tw-bg-[#F4F4F4] tw-ms-auto tw-p-2 tw-pl-4 tw-pr-4">
             <div class="tw-flex tw-flex-row tw-gap-1">
                 @for(attachement of message.attachments; track attachement){
-                    @if(this.fileIdsObjectsMap?.get(attachement.file_id)){
-                    <div
-                        class="tw-flex tw-flex-row tw-gap-3  tw-relative tw-p-2 tw-bg-white tw-rounded-xl tw-items-center tw-justify-center tw-mb-2">
-                        <div class="tw-flex tw-flex-col tw-relative tw-items-center tw-justify-center tw-min-w-[35px]">
-                           
-                            @if(fileIdsObjectsMap?.get(attachement.file_id).purpose === 'vision'){
-                            <img src="assets/icons8-image.svg" alt="Image attachment" class="tw-min-w-[35px]">
-                            }@else {
-                            <img src="assets/icons8-file.svg" alt="File attachment" class="tw-min-w-[35px]">
-                            }
-                        </div>
-                        <div class="tw-flex tw-flex-col tw-truncate">
-                            <span class="tw-truncate">{{this.fileIdsObjectsMap?.get(attachement.file_id).filename}}</span>
-                        </div>
+                @if(this.fileIdsObjectsMap?.get(attachement.file_id)){
+                <div
+                    class="tw-flex tw-flex-row tw-gap-3  tw-relative tw-p-2 tw-bg-white tw-rounded-xl tw-items-center tw-justify-center tw-mb-2">
+                    <div class="tw-flex tw-flex-col tw-relative tw-items-center tw-justify-center tw-min-w-[35px]">
+
+                        @if(fileIdsObjectsMap?.get(attachement.file_id)!.purpose === 'vision'){
+                        <img src="assets/icons8-image.svg" alt="Image attachment" class="tw-min-w-[35px]">
+                        }@else {
+                        <img src="assets/icons8-file.svg" alt="File attachment" class="tw-min-w-[35px]">
+                        }
                     </div>
-                    }
-                    }
+                    <div class="tw-flex tw-flex-col tw-truncate">
+                        <span class="tw-truncate">{{this.fileIdsObjectsMap?.get(attachement.file_id)!.filename}}</span>
+                    </div>
+                </div>
+                }
+                }
             </div>
-            <span>{{message.content[0].text.value}}</span>
+            <span>{{message.content[0].text!.value}}</span>
         </div>
         }@else {
         <div class="tw-flex  tw-flex-row  tw-gap-2">
             <img src="assets/chatgpt-logo.svg" alt="ChatGPT Logo"
                 class="tw-w-[30px] tw-h-[30px] tw-p-1 tw-rounded-full tw-border tw-border-gray-300 tw-object-cover">
-            <markdown [data]="message.content[0].text.value"></markdown>
+            <markdown [data]="message.content[0].text!.value"></markdown>
         </div>
         }
         }
@@ -85,12 +84,12 @@
     <div class="tw-flex tw-flex-col tw-bg-[#F4F4F4] tw-p-4 tw-rounded-3xl tw-max-w-full tw-w-full tw-mt-5">
         @if(filesUploadState.size > 0){
         <div class="tw-flex tw-flex-row tw-gap-1 tw-mb-5">
-            <!-- @for(fileUploadState of filesUploadState; track fileUploadState){ -->
             @for(file of filesUploadState.keys(); track file){
             <div
                 class="tw-flex tw-flex-row tw-gap-3 tw-w-[200px] tw-relative tw-p-2 tw-bg-white tw-rounded-2xl tw-items-center tw-justify-center">
                 <div class="tw-absolute tw-end-[-6px] tw-top-[-6px] tw-cursor-pointer  hover:opacity-80"
-                    (click)="deleteFile(file)">
+                    (click)="deleteFile(file)" (keydown.enter)="deleteFile(file)" (keydown.space)="deleteFile(file)"
+                    tabindex="0">
                     <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px"
                         fill="#666666">
                         <path
@@ -114,7 +113,6 @@
 
                 <div class="tw-flex tw-flex-col tw-truncate">
                     <span class="tw-truncate">{{file.name}}</span>
-                    <!-- <span class="tw-text-xs">{{file.size}} bytes</span> -->
                     @if(filesIds.get(file)){
                     <span class="tw-text-[10px]">id: {{filesIds.get(file)}}</span>
                     }
@@ -130,10 +128,6 @@
                     </div>
                     }
                 </div>
-
-
-
-
             </div>
             }
         </div>
@@ -151,9 +145,10 @@
                         d="M720-330q0 104-73 177T470-80q-104 0-177-73t-73-177v-370q0-75 52.5-127.5T400-880q75 0 127.5 52.5T580-700v350q0 46-32 78t-78 32q-46 0-78-32t-32-78v-370h80v370q0 13 8.5 21.5T470-320q13 0 21.5-8.5T500-350v-350q-1-42-29.5-71T400-800q-42 0-71 29t-29 71v370q-1 71 49 120.5T470-160q70 0 119-49.5T640-330v-390h80v390Z" />
                 </svg>
             </button>
+            
             <button class="btn bg-dark rounded-circle btn-smd p-1 tw-w-[32px] tw-h-[32px] tw-ms-auto"
-                (click)="responseStatus === 'terminated'?sendMessageOnStream():stopMessageOnStream()"
-                [disabled]="(responseStatus === 'waitingToStart') || currentMessage === '' || opndThrMsgsLoding">
+                (click)="(responseStatus === 'terminated')?sendMessageOnStream():stopMessageOnStream()"
+                [disabled]="opndThrMsgsLoding || (currentMessage === '' &&  responseStatus === 'terminated' ) || responseStatus === 'waitingToStart' || responseStatus  === 'waitingToStop'">
                 <div class="tw-w-full tw-h-full tw-flex tw-flex-col tw-items-center tw-justify-center">
                     @switch (responseStatus) {
                     @case ('terminated') {
@@ -178,8 +173,6 @@
                     }
 
                 </div>
-
-
             </button>
         </div>
     </div>

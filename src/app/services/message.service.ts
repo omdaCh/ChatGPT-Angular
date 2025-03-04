@@ -1,17 +1,20 @@
-import { HttpClient, HttpEvent, HttpEventType } from "@angular/common/http";
+import { HttpClient, HttpDownloadProgressEvent, HttpEvent, HttpEventType, HttpResponse } from "@angular/common/http";
 import { inject, Injectable } from "@angular/core";
 import { Observable } from "rxjs";
+import { GPTMessage } from "../models/gpt-message.model";
+import { StreamOrCompleteMsgResp } from "../models/stream-message.model";
 
 
 @Injectable({ providedIn: 'root' })
 export class MessageService {
-    private messageURL = 'http://localhost:3000/messages';
+    private messageURL = 'http://localhost:3000/messages'; 
+
 
     private http: HttpClient = inject(HttpClient);
 
 
     getThreadMessages(threadId: string) {
-        return this.http.get<any[]>(`${this.messageURL}/${threadId}`);
+        return this.http.get<GPTMessage[]>(`${this.messageURL}/${threadId}`);
     }
 
     sendMessage(threadId: string, assistantId: string, message: string) {
@@ -19,7 +22,7 @@ export class MessageService {
     }
 
     sendMessageOnStream(threadId: string, assistantId: string) {
-        return new Observable<any>((observer) => {
+        return new Observable<StreamOrCompleteMsgResp>((observer) => {
             this.http
                 .post(`${this.messageURL}/send-message-on-stream`,
                     {
@@ -35,9 +38,9 @@ export class MessageService {
                 .subscribe({
                     next: (event: HttpEvent<string>) => {
                         if (event.type === HttpEventType.DownloadProgress) {
-                            const partialText = (event as any).partialText.trim();
+                            const partialText = (event as HttpDownloadProgressEvent).partialText!.trim();
                             const lines = partialText.split('\n');
-                            let responseInStream: string = '';
+                            let responseInStream = '';
                             lines.forEach((line: string) => {
                                 if (line != '') {
                                     const responseType: string = line.split(":")[0].trim();
@@ -51,17 +54,17 @@ export class MessageService {
                                     }
                                 }
                             });
-                            const responseAndType = {
+                            const responseAndType: StreamOrCompleteMsgResp = {
                                 type: 'textInStream',
-                                response: responseInStream
+                                textInStream: responseInStream
                             }
                             observer.next(responseAndType);
                         } else if (event.type === HttpEventType.Response) {
-                            const eventAsAny = (event as any)
-                            let responseOpject = JSON.parse(eventAsAny.body.split("responseObject:")[1]);
-                            const responseAndType = {
-                                type: 'object',
-                                response: responseOpject
+                            const eventAsHttpResponse = event as HttpResponse<string>
+                            const responseOpject = JSON.parse(eventAsHttpResponse.body!.split("responseObject:")[1]);
+                            const responseAndType: StreamOrCompleteMsgResp = {
+                                type: 'messageObject',
+                                finaleMessageObject: responseOpject
                             }
                             observer.next(responseAndType);
                             observer.complete();
@@ -75,11 +78,12 @@ export class MessageService {
     }
 
     stopMessageOnStream(threadId: string) {
-        return this.http.post(`${this.messageURL}/stop-message-on-stream`, { threadId })
+        return this.http.post(`${this.messageURL}/stop-message-on-stream`, { threadId:threadId });
     }
+    
 
     createUserMessage(threadId: string, message: string, files: string[]) {
-        return this.http.post(`${this.messageURL}/create-user-message`, { threadId: threadId, userMessage: message, files: files });
+        return this.http.post<GPTMessage>(`${this.messageURL}/create-user-message`, { threadId: threadId, userMessage: message, files: files });
     }
 
 }

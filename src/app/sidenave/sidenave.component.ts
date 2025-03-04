@@ -1,10 +1,10 @@
 import { ChangeDetectorRef, Component, inject, Input, OnInit } from '@angular/core';
-import { ChatThread } from '../types';
 import { CommonModule } from '@angular/common';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
 import { AutofocusDirective } from '../directives/AutofocusDirective.directive';
 import { ThreadService } from '../services/thread.service';
+import { ChatThread } from '../models/chat-thread.model';
 
 @Component({
   selector: 'app-sidenave',

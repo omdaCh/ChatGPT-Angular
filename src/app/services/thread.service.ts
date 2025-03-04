@@ -1,7 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
-import { ChatThread } from '../types'
+
+import { SimpleMessageAPIResponse } from '../models/simple-message-api-response.model';
+import { ChatThread } from '../models/chat-thread.model';
 
 @Injectable({
     providedIn: 'root',
@@ -12,7 +14,7 @@ export class ThreadService {
 
     private openedThread: ChatThread | undefined;
 
-    private openedThreadSubject = new BehaviorSubject<any>(null);
+    private openedThreadSubject = new BehaviorSubject<ChatThread | undefined>(undefined);
     openedThread$ = this.openedThreadSubject.asObservable();
 
     chatThreads: ChatThread[] = [];
@@ -27,17 +29,13 @@ export class ThreadService {
         }));
     }
 
-    deleteThread(threadToDeleteId: string): Observable<any> {
-        return this.http.delete(`${this.threadUrl}/${threadToDeleteId}`).pipe(tap(() => {
+    deleteThread(threadToDeleteId: string): Observable<SimpleMessageAPIResponse> {
+        return this.http.delete<SimpleMessageAPIResponse>(`${this.threadUrl}/${threadToDeleteId}`).pipe(tap(() => {
             this.chatThreads = this.chatThreads.filter(thread => thread.thread_id !== threadToDeleteId);
             if (this.openedThread?.thread_id == threadToDeleteId)
                 this.setOpenedThread(undefined);
         }
         ));
-    }
-
-    startNewConversation(message: string): Observable<any> {
-        return this.http.post(`${this.threadUrl}/new-conversation`, { message });
     }
 
     createNewThread(threadFirstMessage: string): Observable<ChatThread> {
@@ -54,10 +52,9 @@ export class ThreadService {
         this.openedThreadSubject.next(this.openedThread);
     }
 
-    updateThreadTitle(threadId: string, title: string): Observable<any> {
-        return this.http.put(`${this.threadUrl}/update-title`, { thread_id: threadId, title });
+    updateThreadTitle(threadId: string, title: string): Observable<SimpleMessageAPIResponse> {
+        return this.http.put<SimpleMessageAPIResponse>(`${this.threadUrl}/update-title`, { thread_id: threadId, title });
     }
 
 
 }
-

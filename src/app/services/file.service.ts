@@ -1,50 +1,49 @@
-import { HttpClient, HttpEvent, HttpRequest } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from "@angular/core";
-import { Observable, of, Subject, tap } from "rxjs";
+import { Observable, of, tap } from "rxjs";
 import { backendUrl } from '../constants'
 import { FilePurpose } from '../types';
+import { GPTFile } from '../models/file.model';
 
 @Injectable({ providedIn: 'root' })
 export class FileService {
 
-    private fileUrl: string = `${backendUrl}/files`;
+    private fileUrl = `${backendUrl}/files`;
     private http: HttpClient = inject(HttpClient);
 
-    fileIdsObjectsMap: Map<string, any> = new Map<string, any>();
+    fileIdsObjectsMap: Map<string, GPTFile> = new Map<string, GPTFile>();
 
-    uploadAndCreateFile(file: File, purpose: FilePurpose): Observable<HttpEvent<any>> {
+    uploadAndCreateFile(file: File, purpose: FilePurpose): Observable<GPTFile> {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('purpose', purpose);
 
-        return this.http.post<any>(`${this.fileUrl}/upload-and-create-file`, formData)
-            .pipe(tap((resp: any) => this.fileIdsObjectsMap.set(resp.file.id, resp.file)));
+        return this.http.post<GPTFile>(`${this.fileUrl}/upload-and-create-file`, formData)
+            .pipe(tap((gptFile: GPTFile) => this.fileIdsObjectsMap.set(gptFile.id, gptFile)));
     }
 
-    getFileObject(filedId: string): Observable<any> | null {
-        const fileObject = this.fileIdsObjectsMap.get(filedId)
-        if (fileObject) {
-            return of(fileObject)
-        } else {
-            // return this.http.get<any[]>(`${this.fileUrl}/${filedId}`)
-            //     .pipe(tap((resp: any) => this.fileIdsObjects.set(resp.file.id, resp)));
+    getGPTFile(filedId: string): Observable<GPTFile> | null {
+        const fileObject = this.fileIdsObjectsMap.get(filedId);
+
+        if (!fileObject)
             return null;
-        }
+
+        return of(fileObject);
     }
 
     loadFile(fileId: string) {
         if (!this.fileIdsObjectsMap.get(fileId)) {
-            this.http.get<any>(`${this.fileUrl}/${fileId}`)
+            this.http.get<GPTFile>(`${this.fileUrl}/${fileId}`)
                 .subscribe(
-                    (resp: any) => {
-                        if (resp)
-                            this.fileIdsObjectsMap.set(resp.id, resp);
+                    (gptFile: GPTFile) => {
+                        if (gptFile)
+                            this.fileIdsObjectsMap.set(gptFile.id, gptFile);
                     }
                 )
         }
     }
 
-    getFileIdsObjectsMap(): Map<string, any> {
+    getFileIdsObjectsMap(): Map<string, GPTFile> {
         return this.fileIdsObjectsMap;
     }
 

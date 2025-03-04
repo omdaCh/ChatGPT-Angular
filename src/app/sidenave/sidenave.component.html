@@ -1,14 +1,14 @@
 @if(!isCollapsed!.value){
 <div class="tw-flex tw-flex-col tw-h-full tw-w-[250px] tw-bg-[#F8F9FA] tw-overflow-auto"
     [@openClose]="!isCollapsed!.value ? 'open' : 'closed'">
-    <button class="btn btn-light tw-m-2 tw-w-fit" (click)="closeSideNave()">
+    <button class="btn btn-light tw-m-2 tw-w-fit" (click)="closeSideNave()" tabindex="0">
         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000">
             <path
                 d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm240-80h400v-480H400v480Zm-80 0v-480H160v480h160Zm-160 0v-480 480Zm160 0h80-80Zm0-480h80-80Z" />
         </svg>
     </button>
     <div class="position-sticky pt-3 tw-flex tw-flex-col tw-gap-2 tw-p-3 ">
-        <button class="btn btn-light d-flex align-items-center tw-gap-2" (click)="createNewChat()">
+        <button class="btn btn-light d-flex align-items-center tw-gap-2" (click)="createNewChat()" tabindex="0">
             <svg class="tw-w-6 tw-h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="#000000">
                 <path
                     d="M120-160v-600q0-33 23.5-56.5T200-840h480q33 0 56.5 23.5T760-760v203q-10-2-20-2.5t-20-.5q-10 0-20 .5t-20 2.5v-203H200v400h283q-2 10-2.5 20t-.5 20q0 10 .5 20t2.5 20H240L120-160Zm160-440h320v-80H280v80Zm0 160h200v-80H280v80Zm400 280v-120H560v-80h120v-120h80v120h120v80H760v120h-80ZM200-360v-400 400Z" />
@@ -17,58 +17,60 @@
         </button>
         <div class="tw-overflow-auto tw-me-[-8px] ">
             @for(thread of threadService.chatThreads; track thread.thread_id){
-                <div class=" tw-p-2 tw-flex tw-flex-row tw-rounded-xl hover:tw-bg-[#F2F0F4] tw-cursor-pointer"
-                    [style.background-color]="thread.thread_id == openedThread?.thread_id ? '#ECEBF0' : ''"
-                    (click)="openThread($event,thread)">
-                    @if(threadToRenameId !== thread.thread_id){
-                    <span class="text-container tw-max-w-[170px]">
-                        {{thread.title}}
-                    </span>
-                    <div id="dropdownDiv" class="btn-group tw-ms-auto" dropdown >
-                        <button  class="btn btn-light btn-xs" dropdownToggle >
-                            <svg xmlns="http://www.w3.org/2000/svg" height="14px" viewBox="0 -960 960 960" width="14px"
-                                fill="#000000">
-                                <path
-                                    d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z" />
-                            </svg>
-                        </button>
-                        <div class="tw-fixed tw-z-50">
-                            <ul *dropdownMenu class="dropdown-menu"   role="menu">
-                                <li role="menuitem" (click)="renameChat(thread.thread_id)">
-                                    <a class="dropdown-item">
-                                        <div class="tw-flex tw-flex-row tw-items-center tw-gap-3">
-                                            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960"
-                                                width="20px" fill="#666666">
-                                                <path
-                                                    d="M80 0v-160h800V0H80Zm160-320h56l312-311-29-29-28-28-311 312v56Zm-80 80v-170l448-447q11-11 25.5-17t30.5-6q16 0 31 6t27 18l55 56q12 11 17.5 26t5.5 31q0 15-5.5 29.5T777-687L330-240H160Zm560-504-56-56 56 56ZM608-631l-29-29-28-28 57 57Z" />
-                                            </svg>
-                                            <span>Rename</span>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li role="menuitem" (click)="deleteChat(thread.thread_id); $event.stopPropagation()">
-                                    <a class="dropdown-item text-danger">
-                                        <div class="tw-flex tw-flex-row tw-items-center tw-gap-3">
-                                            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960"
-                                                width="20px" fill="#DC3545">
-                                                <path
-                                                    d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z" />
-                                            </svg>
-                                            <span>Delete</span>
-                                        </div>
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                        
+            <div class=" tw-p-2 tw-flex tw-flex-row tw-rounded-xl hover:tw-bg-[#F2F0F4] tw-cursor-pointer"
+                [style.background-color]="thread.thread_id === openedThread?.thread_id ? '#ECEBF0' : ''"
+                (click)="openThread($event,thread)" (keydown.enter)="openThread($event,thread)" tabindex="0">
+                @if(threadToRenameId !== thread.thread_id){
+                <span class="text-container tw-max-w-[170px]">
+                    {{thread.title}}
+                </span>
+                <div id="dropdownDiv" class="btn-group tw-ms-auto" dropdown>
+                    <button class="btn btn-light btn-xs" dropdownToggle>
+                        <svg xmlns="http://www.w3.org/2000/svg" height="14px" viewBox="0 -960 960 960" width="14px"
+                            fill="#000000">
+                            <path
+                                d="M240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400Z" />
+                        </svg>
+                    </button>
+                    <div class="tw-fixed tw-z-50">
+                        <ul *dropdownMenu class="dropdown-menu" role="menu">
+                            <li role="menuitem" (click)="renameChat(thread.thread_id)"
+                                (keydown.enter)="openThread($event,thread)" tabindex="0">
+                                <a class="dropdown-item">
+                                    <div class="tw-flex tw-flex-row tw-items-center tw-gap-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960"
+                                            width="20px" fill="#666666">
+                                            <path
+                                                d="M80 0v-160h800V0H80Zm160-320h56l312-311-29-29-28-28-311 312v56Zm-80 80v-170l448-447q11-11 25.5-17t30.5-6q16 0 31 6t27 18l55 56q12 11 17.5 26t5.5 31q0 15-5.5 29.5T777-687L330-240H160Zm560-504-56-56 56 56ZM608-631l-29-29-28-28 57 57Z" />
+                                        </svg>
+                                        <span>Rename</span>
+                                    </div>
+                                </a>
+                            </li>
+                            <li role="menuitem" (click)="deleteChat(thread.thread_id); $event.stopPropagation()"
+                                (keydown.enter)="deleteChat(thread.thread_id); $event.stopPropagation()" tabindex="0">
+                                <a class="dropdown-item text-danger">
+                                    <div class="tw-flex tw-flex-row tw-items-center tw-gap-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960"
+                                            width="20px" fill="#DC3545">
+                                            <path
+                                                d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z" />
+                                        </svg>
+                                        <span>Delete</span>
+                                    </div>
+                                </a>
+                            </li>
+                        </ul>
                     </div>
-                    }@else {
-                    <input #renameInput class="tw-w-full" [value]="thread.title"
-                        (focusout)="saveThreadNameChange(thread.thread_id ,renameInput.value)"
-                        (keydown.enter)="saveThreadNameChange(thread.thread_id ,renameInput.value)" ngAutofocus />
-                    }
+
                 </div>
+                }@else {
+                <input #renameInput class="tw-w-full" [value]="thread.title"
+                    (focusout)="saveThreadNameChange(thread.thread_id ,renameInput.value)"
+                    (keydown.enter)="saveThreadNameChange(thread.thread_id ,renameInput.value)" appAutofocus />
                 }
+            </div>
+            }
         </div>
     </div>
 </div>

@@ -1,6 +1,5 @@
 import { Component, inject } from '@angular/core';
 import { ChatComponent } from './chat-component/chat-component.component';
-import { Conversation } from './conversation.model';
 import { SidenaveComponent } from './sidenave/sidenave.component';
 import { ThreadService } from './services/thread.service';
 
@@ -14,7 +13,7 @@ import { ThreadService } from './services/thread.service';
 export class AppComponent  {
   title = 'chatgptApi';
 
-  conversations: Conversation[] = []
+
 
   threadService: ThreadService = inject(ThreadService);
 
