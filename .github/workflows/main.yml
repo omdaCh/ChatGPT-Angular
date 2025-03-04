@@ -30,11 +30,7 @@ jobs:
       - name: Build Angular App
         run: npm run build --if-present
       
-      # - name: Run Angular tests
-      #   run: npm test -- --watch=false --browsers=ChromeHeadless
-      
       - name: Deploy to Firebase
-        # Only deploy on push to master, not on pull requests
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -42,3 +38,5 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
           channelId: live
           projectId: angular-chatgpt
+        env:
+          FIREBASE_CLI_EXPERIMENTS: webframeworks
