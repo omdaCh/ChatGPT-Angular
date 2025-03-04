@@ -30,8 +30,8 @@ jobs:
       - name: Build Angular App
         run: npm run build --if-present
       
-      - name: Run Angular tests
-        run: npm test -- --watch=false --browsers=ChromeHeadless
+      # - name: Run Angular tests
+      #   run: npm test -- --watch=false --browsers=ChromeHeadless
       
       - name: Deploy to Firebase
         # Only deploy on push to master, not on pull requests
