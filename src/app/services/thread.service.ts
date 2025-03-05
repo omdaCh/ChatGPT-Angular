@@ -4,13 +4,14 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 
 import { SimpleMessageAPIResponse } from '../models/simple-message-api-response.model';
 import { ChatThread } from '../models/chat-thread.model';
+import { backendUrl } from '../constants';
 
 @Injectable({
     providedIn: 'root',
 })
 export class ThreadService {
 
-    private threadUrl = 'http://localhost:3000/threads';
+    private threadUrl = `${backendUrl}/threads`;  
 
     private openedThread: ChatThread | undefined;
 

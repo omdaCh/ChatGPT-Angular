@@ -3,11 +3,12 @@ import { inject, Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 import { GPTMessage } from "../models/gpt-message.model";
 import { StreamOrCompleteMsgResp } from "../models/stream-message.model";
+import { backendUrl } from "../constants";
 
 
 @Injectable({ providedIn: 'root' })
 export class MessageService {
-    private messageURL = 'http://localhost:3000/messages'; 
+    private messageURL =  `${backendUrl}/messages`; 
 
 
     private http: HttpClient = inject(HttpClient);
